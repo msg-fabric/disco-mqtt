@@ -1,0 +1,47 @@
+import FabricHub from 'msg-fabric-core/esm/mf-json-node.js'
+const hub = FabricHub.create()
+
+import mqtt_client from 'u8-mqtt/esm/node/v5.mjs'
+const mqtt = mqtt_client()
+  .with_tcp(9883, '127.0.0.1')
+
+let id = hub.local.id_route
+let presence = `msg-fabric-presence/${id}`
+
+
+hub.local.addTarget @ 'hello',
+  pkt => console.log(`MSG RECV [${id}]:`, pkt.body)
+hub.send @ [id, 'hello'], @{} test: 'smoke?'
+
+
+await mqtt.connect @:
+  client_id: ['msgfab-'+id, '-mf']
+  will: {
+    qos: 1, retain: 1,
+    topic: presence,
+    paylod: '', }
+
+console.log @ 'MQTT Live', @{} id, presence
+
+mqtt.sub_topic @
+  'msg-fabric-presence/:id'
+  @{} qos: 1, retain: true
+  @\ pkt, params, ctx ::>
+    let obj = pkt.json()
+    console.log @ "Updated:", params, obj
+    if obj ::
+      let channel = await hub.connect(obj.conn)
+      await hub.timeouts.add(200)
+      await hub.send @ [obj.id, 'hello'], {
+        msg: `hello from ${id}`, id, presence}
+
+
+
+
+const svr = hub.tcp.createServer()
+svr.listen @: port: 0, host: '127.0.0.1'
+
+let conn = await svr.conn_info(true)
+await mqtt.json_store @ presence,
+  @{} id, conn: `tcp://${conn.address}:${conn.port}`
+
