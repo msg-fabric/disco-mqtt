@@ -21,7 +21,22 @@ let mqtt = await M.mqtt_start(id, conn)
 hub.router.addDiscovery @
   M.disco_mqtt(hub, mqtt)
 
-await M.mf_mqtt_demo(hub, mqtt)
+//await mf_mqtt_demo(hub, mqtt)
 
 
+
+async function mf_mqtt_demo(hub, mqtt) ::
+  let me = `IAM -- ${hub.local.id_route}`
+
+  mqtt.on_topic @ M.pfx_presence+':id',
+    (pkt, params, ctx) => ::
+      if params.id != hub.local.id_route ::
+        console.log @ "SAW:", params, pkt.json()
+      else console.log @ "SAW myself!", params, pkt.json()
+
+  mqtt.on_topic @ M.pfx_presence+':id',
+    async (pkt, params, ctx) => ::
+      await hub.send @ [params.id, 'hello'],
+        @{} msg: `hello from ${me}`
+            myself: params.id == hub.local.id_route
 

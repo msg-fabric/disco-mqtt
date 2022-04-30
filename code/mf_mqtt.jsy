@@ -5,7 +5,7 @@ export const pfx_presence = `msg-fabric-presence/`
 export async function mqtt_start(pub_id, conn, extra) ::
   // use reconnectable mqtt client id
   let json = @{} ...extra
-    ts0: new Date().toISOString()
+    ts0: Date.now()
     conn: conn.asURL()
 
   let topic = pfx_presence + pub_id
@@ -27,7 +27,7 @@ export async function mqtt_start(pub_id, conn, extra) ::
 
   async function update_presence() ::
     try ::
-      json.ts = new Date().toISOString()
+      json.ts = Date.now() - json.ts0
       await mqtt.json_store(topic, json)
     catch err ::
       console.warn @ err
@@ -69,20 +69,4 @@ export function disco_mqtt(hub, mqtt) ::
       let info = await chan.peer_info
       //console.log @ 'connected to:', peer.conn, info
     return chan
-
-
-export async function mf_mqtt_demo(hub, mqtt) ::
-  let me = `IAM -- ${hub.local.id_route}`
-
-  mqtt.on_topic @ pfx_presence+':id',
-    (pkt, params, ctx) => ::
-      if params.id != hub.local.id_route ::
-        console.log @ "SAW:", params, pkt.json()
-      else console.log @ "SAW myself!", params, pkt.json()
-
-  mqtt.on_topic @ pfx_presence+':id',
-    async (pkt, params, ctx) => ::
-      await hub.send @ [params.id, 'hello'],
-        @{} msg: `hello from ${me}`
-            myself: params.id == hub.local.id_route
 
