@@ -24,6 +24,7 @@
     "clean": "rm -rf ./esm/*",
     "prebuild": "test -d ./node_modules || npm ci",
     "build": "rollup --config",
-    "watch": "rollup --config --watch"
+    "watch": "rollup --config --watch",
+    "dkr_deps": "docker stack deploy -c test/integ/deps-deploy.yml integ_mqtt"
   }
 }

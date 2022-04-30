@@ -8,8 +8,7 @@ console.log @ 'MQTT Spy Live'
 
 mqtt.sub_topic @
   'msg-fabric-presence/:id'
-  @{} qos: 1, retain: true
-  @\ pkt, params, ctx ::>
+  async (pkt, params, ctx) => ::
     let {payload, b0, dup, topic, props, ... info} = pkt
     console.log @ "SPY", params, pkt.json(), info
 
