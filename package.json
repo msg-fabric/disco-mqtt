@@ -12,12 +12,12 @@
   },
   "workspaces": [],
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^13.0.5",
-    "msg-fabric-core": "file:../msg-fabric-core",
-    "rollup": "^2.57.0",
-    "rollup-plugin-dgnotify": "^0.1.7",
-    "rollup-plugin-jsy": "^1.7.3",
-    "u8-mqtt": "^0.0.24"
+    "@rollup/plugin-node-resolve": "^13.2.1",
+    "msg-fabric-core": "^0.9.0-14",
+    "rollup": "^2.71.1",
+    "rollup-plugin-dgnotify": "^0.1.8",
+    "rollup-plugin-jsy": "^1.7.4",
+    "u8-mqtt": "^0.0.27"
   },
   "scripts": {
     "start": "watchexec -cr -d 250 -w ./esm -- node --enable-source-maps ./esm/index.mjs",
