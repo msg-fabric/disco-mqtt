@@ -1,57 +1,73 @@
+import {MQTT_base} from './base.jsy'
 
-const _mqtt_disco_ = /* #__PURE__ */ @{}
-  from(mqtt, url, discover) ::
-    let _conn = mqtt.connect()
-    return @{} __proto__: this,
-      discover, url, mqtt, _conn
+export function mqtt_disco(mqtt, url) ::
+  return MQTT_disco.from(mqtt, url)
 
-  test: q => true
-  discover(q) ::
+export class MQTT_disco extends MQTT_base ::
+  static from(mqtt, url) ::
+    return new this()
+      .with_mqtt(mqtt)
+      .subscribe(url)
 
-  async channel_to(hub, advert, query) ::
+  subscribe(url) ::
+    this.mqtt.on_topic @ url.pathname+':id',
+      this.on_advert.bind(this)
+    this.mqtt.subscribe(url.pathname + '#')
+    return this.with @:
+      url: new URL('.', url)
+      db_adverts: new Map()
+      db_chans: new Map()
+
+  //mqtt_obj_decode = pkt => pkt.json()
+  async on_advert(pkt, params) ::
+    let advert = this.mqtt_obj_decode
+      ? this.mqtt_obj_decode(pkt)
+      : pkt.json()
+
+    let id = params.id, db_adverts = this.db_adverts
+
+    if advert && advert.then ::
+      db_adverts.set(id, advert)
+      advert = await advert
+
+    if ! advert ::
+      db_adverts.delete(id)
+      this.db_chans.delete(id)
+    else db_adverts.set(id, advert)
+
+  // addDiscovery protocol {test, discover}
+  test(query) :: return true
+  async discover(query) ::
+    let key = this.xform
+      ? await this.xform(query)
+      : query.id_route
+
+    let db_chans = this.db_chans
+    let cur = db_chans.get(key)
+    if ! cur ::
+      cur = this._use_advert(key, query)
+      db_chans.set(key, cur)
+    return cur
+
+  // retries = 3
+  // ms_backoff = 50
+  async _use_advert(key, query) ::
+    let db_adverts = this.db_adverts,
+        hub = query.router_ctx.hub,
+        advert
+    for let i=this.retries || 3; i>0; i-- ::
+      advert = await db_adverts.get(key)
+      if advert :: break
+      await hub.timeouts.add(this.ms_backoff || 50)
+
+    return advert && this._channel_to(hub, advert, query)
+
+  async _channel_to(hub, advert, query) ::
     let chan = await hub.connect(advert.conn)
     let peer = await chan.peer_info
     this.on_connect(advert, peer, chan)
     return chan
 
-  retries: 3, ms_backoff: 50
   on_connect(advert, peer, chan) ::
     //console.log @ 'connected to:', advert, peer
-
-
-export function mqtt_disco(mqtt, url) ::
-  url = new URL('.', url)
-
-  let db_advert=new Map(), db_chans=new Map()
-  let self = _mqtt_disco_.from @ mqtt, url, discover
-  mqtt.on_topic @ url.pathname+':id', on_advert
-  mqtt.subscribe(url.pathname + '#')
-  return self
-
-  function on_advert(pkt, params) ::
-    let advert = pkt.json()
-    if ! advert ::
-      db_advert.delete(params.id)
-      db_chans.delete(params.id)
-    else db_advert.set(params.id, advert)
-
-  async function to_advert(key, query) ::
-    let advert, hub=query.router_ctx.hub
-    for let i=self.retries; i>0; i-- ::
-      advert = db_advert.get(key)
-      if advert :: break
-      await hub.timeouts.add(self.ms_backoff)
-
-    return advert && self.channel_to(hub, advert, query)
-
-  async function discover(query) ::
-    let key = self.xform
-      ? await self.xform(query)
-      : query.id_route
-
-    let cur = db_chans.get(key)
-    if ! cur ::
-      cur = to_advert(key, query)
-      db_chans.set(key, cur)
-    return cur
 

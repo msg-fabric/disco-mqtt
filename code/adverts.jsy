@@ -1,6 +1,11 @@
+import {MQTT_base} from './base.jsy'
 
-const _mqtt_advert_ = /* #__PURE__ */ @{}
-  from(mqtt, url, status) ::
+export function mqtt_advert(mqtt, url, status) ::
+  return MQTT_advert.from(mqtt, url, status)
+
+export class MQTT_advert extends MQTT_base ::
+  static from(mqtt, url, status) ::
+    url = new URL(url)
     let topic = url.pathname
 
     let _conn = mqtt.connect @:
@@ -8,22 +13,20 @@ const _mqtt_advert_ = /* #__PURE__ */ @{}
       // last will: remove key upon disconnect
       will: @{} qos: 1, retain: true, topic, paylod: ''
 
-    return @{} __proto__: this,
-      topic, status, mqtt, _conn,
+    return new this()
+      .with_mqtt(mqtt, _conn)
+      .with @: topic, status
+      .advertize()
 
   async advertize() ::
     try ::
       await this._conn
       let {mqtt, topic, status} = this
       if status ::
-        await mqtt.json_store(topic, status)
+        await mqtt.obj_store(topic, status, this.mqtt_obj_encode)
       return {ok: !!status, advert: this}
     catch err ::
       return {err, advert: this}
 
-
-export function mqtt_advert(mqtt, url, status) ::
-  url = new URL(url)
-  let self = _mqtt_advert_.from(mqtt, url, status)
-  return self.advertize()
+  // mqtt_obj_decode: obj => JSON.stringify(obj)
 

@@ -34,6 +34,7 @@
     "u8-mqtt": "^0.0.28"
   },
   "scripts": {
+    "mqtt_spy": "node ./demo/mqtt_spy.mjs",
     "start": "watchexec -cr -d 250 -w ./esm -- node --enable-source-maps ./demo/demo.mjs",
     "clean": "rm -rf ./esm/*",
     "prebuild": "test -d ./node_modules || npm ci",

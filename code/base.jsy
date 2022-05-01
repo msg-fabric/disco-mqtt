@@ -1,0 +1,9 @@
+
+export class MQTT_base ::
+  with(kw) :: return Object.assign(this, kw)
+
+  with_mqtt(mqtt, _conn) ::
+    return Object.defineProperties @ this, @{}
+      mqtt: @{} value: mqtt
+      _conn: @{} value: _conn || mqtt.connect()
+
