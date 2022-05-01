@@ -1,6 +1,6 @@
 import FabricHub from 'msg-fabric-core/esm/mf-json-node.js'
 import mqtt_client from 'u8-mqtt/esm/node/v4.mjs'
-import mfpi_mqtt_with from '../esm/index.js'
+import mfpi_mqtt_with from '@msg-fabric/disco-mqtt'
 
 await new Promise(v => setTimeout(v, 1200*Math.random()))
 console.log("JITTER", new Date().toISOString())
