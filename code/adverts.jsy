@@ -1,0 +1,29 @@
+
+const _mqtt_advert_ = /* #__PURE__ */ @{}
+  from(mqtt, url, status) ::
+    let topic = url.pathname
+
+    let _conn = mqtt.connect @:
+      client_id: `mf-${topic.split('/').pop()}-advert`
+      // last will: remove key upon disconnect
+      will: @{} qos: 1, retain: true, topic, paylod: ''
+
+    return @{} __proto__: this,
+      topic, status, mqtt, _conn,
+
+  async advertize() ::
+    try ::
+      await this._conn
+      let {mqtt, topic, status} = this
+      if status ::
+        await mqtt.json_store(topic, status)
+      return {ok: !!status, advert: this}
+    catch err ::
+      return {err, advert: this}
+
+
+export function mqtt_advert(mqtt, url, status) ::
+  url = new URL(url)
+  let self = _mqtt_advert_.from(mqtt, url, status)
+  return self.advertize()
+

@@ -1,42 +1,24 @@
-import FabricHub from 'msg-fabric-core/esm/mf-json-node.js'
-import * as M from './mf_mqtt.jsy'
+import {mqtt_advert} from './adverts.jsy'
+import {mqtt_disco} from './disco.jsy'
 
-await new Promise(v => setTimeout(v, 2000*Math.random()))
-console.log @ "JITTER", new Date().toISOString()
+const _mqtt_plugin_ = /* #__PURE__ */ @{}
+  from_url(url) ::
+    return @{} __proto__: this, url: new URL(url)
 
-const hub = FabricHub.create()
+  advertize(pub_id, status) ::
+    let url = new URL(pub_id, this.url)
+    return mqtt_advert @
+      this.mqtt_to(url), url, status
 
-let id = hub.local.id_route
-hub.local.addTarget @ 'hello',
-  pkt => console.log(`Hello MSG RECV [${id}]:`, pkt.body)
-hub.send @ [id, 'hello'], @{} test: 'smoke?'
-
-
-let mf_svr = hub.tcp.createServer()
-mf_svr.listen @: port: 0, host: '0.0.0.0'
-let conn = await mf_svr.conn_info(true)
-
-
-let mqtt = await M.mqtt_start(id, conn)
-hub.router.addDiscovery @
-  M.disco_mqtt(hub, mqtt)
-
-//await mf_mqtt_demo(hub, mqtt)
+  discovery(path='') ::
+    let url = new URL(path, this.url)
+    return mqtt_disco @
+      this.mqtt_to(url), url
 
 
-
-async function mf_mqtt_demo(hub, mqtt) ::
-  let me = `IAM -- ${hub.local.id_route}`
-
-  mqtt.on_topic @ M.pfx_presence+':id',
-    (pkt, params, ctx) => ::
-      if params.id != hub.local.id_route ::
-        console.log @ "SAW:", params, pkt.json()
-      else console.log @ "SAW myself!", params, pkt.json()
-
-  mqtt.on_topic @ M.pfx_presence+':id',
-    async (pkt, params, ctx) => ::
-      await hub.send @ [params.id, 'hello'],
-        @{} msg: `hello from ${me}`
-            myself: params.id == hub.local.id_route
+export function mqtt_plugin(mqtt_client) ::
+  return @{} __proto__: _mqtt_plugin_,
+    mqtt_to: url => mqtt_client().with_tcp(url)
+  
+export default mqtt_plugin
 
