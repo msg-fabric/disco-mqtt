@@ -2,6 +2,9 @@
 export class MQTT_base ::
   with(kw) :: return Object.assign(this, kw)
 
+  constructor(pi_ctx) ::
+    if pi_ctx :: this.ctx = pi_ctx
+
   with_mqtt(mqtt, _conn) ::
     return Object.defineProperties @ this, @{}
       mqtt: @{} value: mqtt

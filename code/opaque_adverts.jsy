@@ -1,0 +1,6 @@
+import {MQTT_advert} from './adverts.jsy'
+
+export class MQTT_advert_opaque extends MQTT_advert ::
+  mqtt_obj_encode(obj) ::
+    console.log @ "TODO! encode pkt"
+    return JSON.stringify(obj)

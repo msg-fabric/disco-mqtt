@@ -36,6 +36,9 @@ export default [
   ... add_jsy('core'),
   ... add_jsy('v4'),
   ... add_jsy('v5'),
+  ... add_jsy('opaque'),
+  ... add_jsy('opaque_v4'),
+  ... add_jsy('opaque_v5'),
 ]
 
 

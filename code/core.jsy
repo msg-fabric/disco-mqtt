@@ -14,21 +14,25 @@ export class MQTT_plugin_base ::
     proto.algs = @{} ...proto.algs, ...algs
     return klass
 
-  static from_url(url) ::
-    return new this(url)
+  static from_ctx(pi_ctx, url) ::
+    return new this(pi_ctx, url)
 
-  constructor(url) ::
+  static from_url(url) ::
+    return new this(null, url)
+
+  constructor(pi_ctx, url) ::
     this.url = url = new URL(url)
+    if pi_ctx :: this.ctx = pi_ctx
 
   advertize(pub_id, status) ::
     let url = new URL(pub_id, this.url)
     return this.algs.advert
-      .from @ this.mqtt_to(url), url, status
+      .from @ this.ctx, this.mqtt_to(url), url, status
 
   discovery(path='') ::
     let url = new URL(path, this.url)
     return this.algs.disco
-      .from @ this.mqtt_to(url), url
+      .from @ this.ctx, this.mqtt_to(url), url
 
 
 export const MQTT_plugin = /* #__PURE__ */
@@ -36,5 +40,7 @@ export const MQTT_plugin = /* #__PURE__ */
     disco: MQTT_disco
     advert: MQTT_advert
 
-export {MQTT_plugin as default}
-
+export @{}
+  MQTT_plugin as default
+  MQTT_advert
+  MQTT_disco

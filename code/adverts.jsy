@@ -1,7 +1,7 @@
 import {MQTT_base} from './base.jsy'
 
 export class MQTT_advert extends MQTT_base ::
-  static from(mqtt, url, status) ::
+  static from(pi_ctx, mqtt, url, status) ::
     url = new URL(url)
     let topic = url.pathname
 
@@ -10,7 +10,7 @@ export class MQTT_advert extends MQTT_base ::
       // last will: remove key upon disconnect
       will: @{} qos: 1, retain: true, topic, paylod: ''
 
-    return new this()
+    return new this(pi_ctx)
       .with_mqtt(mqtt, _conn)
       .with @: topic, status
       .advertize()
@@ -25,5 +25,5 @@ export class MQTT_advert extends MQTT_base ::
     catch err ::
       return {err, advert: this}
 
-  // mqtt_obj_decode: obj => JSON.stringify(obj)
+  // mqtt_obj_encode: obj => JSON.stringify(obj)
 

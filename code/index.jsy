@@ -1,6 +1,3 @@
-export * from './base.jsy'
-export * from './adverts.jsy'
-export * from './disco.jsy'
 export * from './core.jsy'
-import {MQTT_plugin} from './core.jsy'
-export {MQTT_plugin as default}
+export {MQTT_plugin as default} from './core.jsy'
+

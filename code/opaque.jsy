@@ -1,0 +1,15 @@
+import {MQTT_plugin_base} from './core.jsy'
+import {MQTT_advert_opaque} from './opaque_adverts.jsy'
+import {MQTT_disco_opaque} from './opaque_disco.jsy'
+
+export class MQTT_plugin_opaque extends MQTT_plugin_base
+    .with_algs @:
+        advert: MQTT_advert_opaque
+        disco: MQTT_disco_opaque
+    ::
+
+export @{}
+  MQTT_advert_opaque
+  MQTT_disco_opaque
+  MQTT_plugin_opaque as default
+
