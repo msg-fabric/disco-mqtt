@@ -1,0 +1,16 @@
+import {MQTT_plugin} from './core.jsy'
+
+#IF PLAT_NODEJS
+  import {mqtt_v5} from 'u8-mqtt/esm/node/v5.mjs'
+#ELIF PLAT_DENO
+  import {mqtt_v5} from 'u8-mqtt/esm/deno/v5.mjs'
+#ELIF PLAT_WEB
+  import {mqtt_v5} from 'u8-mqtt/esm/web/v5.mjs'
+
+export const MQTT_plugin_v5 = /* #__PURE__ */
+  MQTT_plugin.with_client(mqtt_v5)
+
+export {
+  MQTT_plugin_v5 as default,
+  MQTT_plugin_v5 as MQTT_plugin}
+

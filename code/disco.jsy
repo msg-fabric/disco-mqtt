@@ -1,8 +1,5 @@
 import {MQTT_base} from './base.jsy'
 
-export function mqtt_disco(mqtt, url) ::
-  return MQTT_disco.from(mqtt, url)
-
 export class MQTT_disco extends MQTT_base ::
   static from(mqtt, url) ::
     return new this()

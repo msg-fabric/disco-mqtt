@@ -1,8 +1,5 @@
 import {MQTT_base} from './base.jsy'
 
-export function mqtt_advert(mqtt, url, status) ::
-  return MQTT_advert.from(mqtt, url, status)
-
 export class MQTT_advert extends MQTT_base ::
   static from(mqtt, url, status) ::
     url = new URL(url)

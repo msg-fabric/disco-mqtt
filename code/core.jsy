@@ -1,0 +1,40 @@
+import {MQTT_advert} from './adverts.jsy'
+import {MQTT_disco} from './disco.jsy'
+
+
+export class MQTT_plugin_base ::
+  static with_client(mqtt_client) ::
+    return class extends this ::
+      mqtt_to(url=this.url) ::
+        return mqtt_client().with_tcp(url)
+
+  static with_algs(algs) ::
+    let klass = class extends this ::
+    let proto = klass.prototype
+    proto.algs = @{} ...proto.algs, ...algs
+    return klass
+
+  static from_url(url) ::
+    return new this(url)
+
+  constructor(url) ::
+    this.url = url = new URL(url)
+
+  advertize(pub_id, status) ::
+    let url = new URL(pub_id, this.url)
+    return this.algs.advert
+      .from @ this.mqtt_to(url), url, status
+
+  discovery(path='') ::
+    let url = new URL(path, this.url)
+    return this.algs.disco
+      .from @ this.mqtt_to(url), url
+
+
+export const MQTT_plugin = /* #__PURE__ */
+  MQTT_plugin_base.with_algs @:
+    disco: MQTT_disco
+    advert: MQTT_advert
+
+export {MQTT_plugin as default}
+

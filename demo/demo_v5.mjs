@@ -1,6 +1,5 @@
 import FabricHub from 'msg-fabric-core/esm/mf-json-node.js'
-import mqtt_client from 'u8-mqtt/esm/node/v4.mjs'
-import mfpi_mqtt from '@msg-fabric/disco-mqtt'
+import mfpi_mqtt from '@msg-fabric/disco-mqtt/esm/node/v5.js'
 
 await new Promise(v => setTimeout(v, 1200*Math.random()))
 console.log("JITTER", new Date().toISOString())
@@ -18,17 +17,13 @@ mf_svr.listen({ port: 0, host: '0.0.0.0'})
 let conn = await mf_svr.conn_info(true)
 
 
-let mf_mqtt = mfpi_mqtt
-  .with_client(mqtt_client)
-  .from_url('mqtt://127.0.0.1:9883/mf-demo-mqtt/')
-
+let mf_mqtt = mfpi_mqtt.from_url('mqtt://127.0.0.1:9883/mf-demo-mqtt/')
 mf_mqtt.advertize( id, { conn: `tcp://127.0.0.1:${conn.port}` })
 
 hub.router.addDiscovery(
   mf_mqtt.discovery())
 
 await mf_mqtt_demo(hub)
-
 
 
 async function mf_mqtt_demo(hub) {

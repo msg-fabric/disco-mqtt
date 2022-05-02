@@ -1,24 +1,6 @@
-import {mqtt_advert} from './adverts.jsy'
-import {mqtt_disco} from './disco.jsy'
-
-const _mqtt_plugin_ = /* #__PURE__ */ @{}
-  from_url(url) ::
-    return @{} __proto__: this, url: new URL(url)
-
-  advertize(pub_id, status) ::
-    let url = new URL(pub_id, this.url)
-    return mqtt_advert @
-      this.mqtt_to(url), url, status
-
-  discovery(path='') ::
-    let url = new URL(path, this.url)
-    return mqtt_disco @
-      this.mqtt_to(url), url
-
-
-export function mqtt_plugin(mqtt_client) ::
-  return @{} __proto__: _mqtt_plugin_,
-    mqtt_to: url => mqtt_client().with_tcp(url)
-  
-export default mqtt_plugin
-
+export * from './base.jsy'
+export * from './adverts.jsy'
+export * from './disco.jsy'
+export * from './core.jsy'
+import {MQTT_plugin} from './core.jsy'
+export {MQTT_plugin as default}

@@ -20,9 +20,11 @@
     "esm/"
   ],
   "type": "module",
+  "module": "./esm/node/index.js",
+  "web": "./esm/node/index.js",
   "exports": {
     "./esm/*": "./esm/*",
-    ".": "./esm/index.js"
+    ".": "./esm/node/index.js"
   },
   "workspaces": [],
   "devDependencies": {
@@ -31,11 +33,12 @@
     "rollup": "^2.71.1",
     "rollup-plugin-dgnotify": "^0.1.8",
     "rollup-plugin-jsy": "^1.7.4",
+    "rollup-plugin-terser": "^7.0.2",
     "u8-mqtt": "^0.0.28"
   },
   "scripts": {
     "mqtt_spy": "node ./demo/mqtt_spy.mjs",
-    "start": "watchexec -cr -d 250 -w ./esm -- node --enable-source-maps ./demo/demo.mjs",
+    "start": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/demo.mjs",
     "clean": "rm -rf ./esm/*",
     "prebuild": "test -d ./node_modules || npm ci",
     "build": "rollup --config",
