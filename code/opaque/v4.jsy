@@ -1,4 +1,4 @@
-import {MQTT_plugin_opaque} from './opaque.jsy'
+import {MQTT_plugin_opaque} from './index.jsy'
 
 #IF PLAT_NODEJS
   import {mqtt_v4} from 'u8-mqtt/esm/node/v4.mjs'

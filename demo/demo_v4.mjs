@@ -1,7 +1,8 @@
 import mfpi_mqtt from '@msg-fabric/disco-mqtt/esm/node/v4.js'
 import {hub, id, conn, mf_mqtt_demo} from './demo_common.mjs'
+import {mqtt_url} from './demo_config.mjs'
 
-let mf_mqtt = mfpi_mqtt.from_url('mqtt://127.0.0.1:9883/mf-demo-mqtt/')
+let mf_mqtt = mfpi_mqtt.from_url(mqtt_url)
 mf_mqtt.advertize( id, { conn: `tcp://127.0.0.1:${conn.port}` })
 
 hub.router.addDiscovery(

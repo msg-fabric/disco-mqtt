@@ -28,6 +28,7 @@
   },
   "workspaces": [],
   "devDependencies": {
+    "@phorbas/opaque": "^0.3.1",
     "@rollup/plugin-node-resolve": "^13.2.1",
     "msg-fabric-core": "^0.9.0-14",
     "rollup": "^2.71.1",
@@ -37,8 +38,14 @@
     "u8-mqtt": "^0.0.28"
   },
   "scripts": {
-    "mqtt_spy": "node ./demo/mqtt_spy.mjs",
+    "start_spy": "node ./demo/mqtt_spy.mjs",
     "start": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/demo.mjs",
+    "start_v4": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/demo_v4.mjs",
+    "start_v5": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/demo_v5.mjs",
+    "opaque_spy": "node ./demo/opaque/mqtt_spy.mjs",
+    "opaque": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/opaque/demo.mjs",
+    "opaque_v4": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/opaque/demo_v4.mjs",
+    "opaque_v5": "watchexec -cr -d 250 -w ./esm -w ./demo -- node --enable-source-maps ./demo/opaque/demo_v5.mjs",
     "clean": "rm -rf ./esm/*",
     "prebuild": "test -d ./node_modules || npm ci",
     "build": "rollup --config",

@@ -1,4 +1,4 @@
-import {MQTT_advert} from './adverts.jsy'
+import {MQTT_advert} from '../adverts.jsy'
 
 export class MQTT_advert_opaque extends MQTT_advert ::
   mqtt_obj_encode(obj) ::

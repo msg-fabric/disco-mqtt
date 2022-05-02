@@ -1,4 +1,4 @@
-import {MQTT_plugin_base} from './core.jsy'
+import {MQTT_plugin_base} from '../core.jsy'
 import {MQTT_advert_opaque} from './opaque_adverts.jsy'
 import {MQTT_disco_opaque} from './opaque_disco.jsy'
 

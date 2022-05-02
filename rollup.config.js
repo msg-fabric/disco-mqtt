@@ -34,32 +34,38 @@ const _cfg_web_min_ = is_watch && { ... _cfg_web_,
 export default [
   ... add_jsy('index'),
   ... add_jsy('core'),
-  ... add_jsy('v4'),
-  ... add_jsy('v5'),
-  ... add_jsy('opaque'),
-  ... add_jsy('opaque_v4'),
-  ... add_jsy('opaque_v5'),
+  ... add_jsy('v4', {plat:true}),
+  ... add_jsy('v5', {plat:true}),
+  ... add_jsy('opaque/index'),
+  ... add_jsy('opaque/v4', {plat:true}),
+  ... add_jsy('opaque/v5', {plat:true}),
 ]
 
 
 
 function * add_jsy(src_name, opt={}) {
+  let {plat} = opt
   const input = `code/${src_name}${opt.ext || '.jsy'}`
+  const out_name = src_name.replace(/\/index$/,'').replace(/[\/]/g, '_')
 
-  if (_cfg_nodejs_)
+  if (! plat)
+    yield { ... _cfg_, input,
+      output: { file: `esm/${out_name}.js`, format: 'es', sourcemap: true }}
+
+  if (plat && _cfg_nodejs_)
     yield { ... _cfg_nodejs_, input,
-      output: { file: `esm/node/${src_name}.js`, format: 'es', sourcemap: true }}
+      output: { file: `esm/node/${out_name}.js`, format: 'es', sourcemap: true }}
 
-  if (_cfg_deno_)
+  if (plat && _cfg_deno_)
     yield { ... _cfg_deno_, input,
-      output: { file: `esm/deno/${src_name}.js`, format: 'es', sourcemap: true }}
+      output: { file: `esm/deno/${out_name}.js`, format: 'es', sourcemap: true }}
 
-  if (_cfg_web_)
+  if (plat && _cfg_web_)
     yield { ... _cfg_web_, input,
-      output: { file: `esm/web/${src_name}.js`, format: 'es', sourcemap: true }}
+      output: { file: `esm/web/${out_name}.js`, format: 'es', sourcemap: true }}
 
   if (_cfg_web_min_)
     yield { ... _cfg_web_min_, input,
-      output: { file: `esm/${src_name}.min.js`, format: 'es', sourcemap: false }}
+      output: { file: plat ? `esm/web/${out_name}.min.js` : `esm/${out_name}.min.js`, format: 'es', sourcemap: false }}
 }
 

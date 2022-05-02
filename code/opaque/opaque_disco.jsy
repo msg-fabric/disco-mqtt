@@ -1,6 +1,6 @@
-import {MQTT_disco} from './disco.jsy'
+import {MQTT_disco} from '../disco.jsy'
 
 export class MQTT_disco_opaque extends MQTT_disco ::
   mqtt_obj_decode(pkt) ::
     console.log @ "TODO! decode pkt"
-    return pkg.json()
+    return pkt.json()
