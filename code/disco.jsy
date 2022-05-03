@@ -15,30 +15,23 @@ export class MQTT_disco extends MQTT_base ::
       db_adverts: new Map()
       db_chans: new Map()
 
-  //mqtt_obj_decode = pkt => pkt.json()
-  async on_advert(pkt, params) ::
-    let advert = this.mqtt_obj_decode
-      ? this.mqtt_obj_decode(pkt)
-      : pkt.json()
+  advert_from_pkt(pkt) ::
+    return pkt.json()
 
-    let id = params.id, db_adverts = this.db_adverts
-
-    if advert && advert.then ::
-      db_adverts.set(id, advert)
-      advert = await advert
-
-    if ! advert ::
-      db_adverts.delete(id)
+  on_advert(pkt, {id}) ::
+    if 0 === pkt.payload.length ::
+      this.db_adverts.delete(id)
       this.db_chans.delete(id)
-    else db_adverts.set(id, advert)
+    else ::
+      this.db_adverts.set @ id,
+        this.advert_from_pkt(pkt)
+
+  query_key(query) :: return query.id_route
 
   // addDiscovery protocol {test, discover}
   test(query) :: return true
   async discover(query) ::
-    let key = this.xform
-      ? await this.xform(query)
-      : query.id_route
-
+    let key = await this.query_key(query)
     let db_chans = this.db_chans
     let cur = db_chans.get(key)
     if ! cur ::
@@ -60,6 +53,7 @@ export class MQTT_disco extends MQTT_base ::
     return advert && this._channel_to(hub, advert, query)
 
   async _channel_to(hub, advert, query) ::
+    if ! advert.conn :: return
     let chan = await hub.connect(advert.conn)
     let peer = await chan.peer_info
     this.on_connect(advert, peer, chan)

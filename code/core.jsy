@@ -24,15 +24,16 @@ export class MQTT_plugin_base ::
     this.url = url = new URL(url)
     if pi_ctx :: this.ctx = pi_ctx
 
-  advertize(pub_id, status) ::
-    let url = new URL(pub_id, this.url)
-    return this.algs.advert
-      .from @ this.ctx, this.mqtt_to(url), url, status
+  async advertize(id, status) ::
+    let url = this.url
+    return this.algs.advert.from @
+      this.ctx, this.mqtt_to(url), url,
+      id, status
 
-  discovery(path='') ::
-    let url = new URL(path, this.url)
-    return this.algs.disco
-      .from @ this.ctx, this.mqtt_to(url), url
+  async discovery() ::
+    let url = this.url
+    return this.algs.disco.from @
+      this.ctx, this.mqtt_to(url), url
 
 
 export const MQTT_plugin = /* #__PURE__ */

@@ -1,6 +1,11 @@
+import {u8_to_hex} from 'u8-utils'
 import {MQTT_advert} from '../adverts.jsy'
 
 export class MQTT_advert_opaque extends MQTT_advert ::
-  mqtt_obj_encode(obj) ::
-    console.log @ "TODO! encode pkt"
-    return JSON.stringify(obj)
+  async as_pub_id(id) ::
+    let kref = await this.ctx.opaque.from_content(id)
+    return u8_to_hex @ (this.kref = kref).k1ref
+
+  mqtt_obj_encode = obj =>
+    this.kref.encode_obj(obj)
+

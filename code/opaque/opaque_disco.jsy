@@ -1,6 +1,28 @@
+import {u8_to_hex} from 'u8-utils'
 import {MQTT_disco} from '../disco.jsy'
 
 export class MQTT_disco_opaque extends MQTT_disco ::
-  mqtt_obj_decode(pkt) ::
-    console.log @ "TODO! decode pkt"
-    return pkt.json()
+  constructor(pi_ctx) ::
+    super(pi_ctx)
+    this.sym = Symbol()
+
+  advert_from_pkt(pkt) ::
+    return pkt.payload.slice()
+
+  async query_key(query) ::
+    let {id_route} = query
+    let kref = await this.ctx.opaque.from_content(id_route)
+    query[this.sym] = kref
+    return u8_to_hex @ kref.k1ref
+
+  async _channel_to(hub, raw_advert, query) ::
+    let advert
+    try ::
+      let kref = query[this.sym]
+      advert = await kref.decode_obj(raw_advert)
+    catch err ::
+      console.warn @ "MQTT_disco_opaque err", err
+      return
+
+    return super._channel_to(hub, advert, query)
+

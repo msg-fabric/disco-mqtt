@@ -5,9 +5,11 @@ export class MQTT_base ::
   constructor(pi_ctx) ::
     if pi_ctx :: this.ctx = pi_ctx
 
-  with_mqtt(mqtt, _conn) ::
+  with_mqtt(mqtt) ::
     return Object.defineProperties @ this, @{}
       mqtt: @{} value: mqtt
-      _conn: @{} value: _conn || mqtt.connect()
+      _conn: @{} value: this._mqtt_connect(mqtt)
 
+  _mqtt_connect(mqtt) ::
+    return mqtt.connect()
 

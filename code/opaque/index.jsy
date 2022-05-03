@@ -3,10 +3,13 @@ import {MQTT_advert_opaque} from './opaque_adverts.jsy'
 import {MQTT_disco_opaque} from './opaque_disco.jsy'
 
 export class MQTT_plugin_opaque extends MQTT_plugin_base
-    .with_algs @:
-        advert: MQTT_advert_opaque
-        disco: MQTT_disco_opaque
-    ::
+  .with_algs @:
+      advert: MQTT_advert_opaque
+      disco: MQTT_disco_opaque
+  ::
+
+    static from_opaque(opaque, url) ::
+      return this.from_ctx({opaque}, url)
 
 export @{}
   MQTT_advert_opaque

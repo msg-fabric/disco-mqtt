@@ -27,7 +27,7 @@ const _cfg_web_ = { ..._cfg_,
   plugins: _rpis_({PLAT_WEB: true}) }
 
 let is_watch = process.argv.includes('--watch')
-const _cfg_web_min_ = is_watch && { ... _cfg_web_,
+const _cfg_web_min_ = is_watch ? null : { ... _cfg_web_,
   plugins: _rpis_({PLAT_WEB: true}, rpi_terser()) }
 
 
