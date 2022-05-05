@@ -1,5 +1,5 @@
 import {opaque_tahoe, opaque_basic} from '@phorbas/opaque'
-import {mqtt_url} from '../demo_config.mjs'
+import {mqtt_url} from '../config.mjs'
 export {mf_mqtt_demo, mqtt_spy_url} from '../demo_common.mjs'
 
 export const demo_url  = new URL('/mf-mqtt-opaque/demo/', mqtt_url)

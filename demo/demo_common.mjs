@@ -1,4 +1,4 @@
-import {mqtt_url} from './demo_config.mjs'
+import {mqtt_url} from './config.mjs'
 import FabricHub from 'msg-fabric-core/esm/mf-json-node.js'
 
 export const demo_url  = new URL('/mf-mqtt-json/demo/', mqtt_url)
