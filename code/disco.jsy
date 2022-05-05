@@ -8,7 +8,7 @@ export class MQTT_disco extends MQTT_base ::
 
   subscribe(url) ::
     this.mqtt.on_topic @ url.pathname+':id',
-      this.on_advert.bind(this)
+      this._on_advert_pkt.bind(this)
     this.mqtt.subscribe(url.pathname + '#')
     return this.with @:
       url: new URL('.', url)
@@ -18,47 +18,59 @@ export class MQTT_disco extends MQTT_base ::
   advert_from_pkt(pkt) ::
     return pkt.json()
 
-  on_advert(pkt, {id}) ::
+  _on_advert_pkt(pkt, {id}) ::
     if 0 === pkt.payload.length ::
       this.db_adverts.delete(id)
       this.db_chans.delete(id)
+      this.on_advert(id)
     else ::
-      this.db_adverts.set @ id,
-        this.advert_from_pkt(pkt)
+      let advert = this.advert_from_pkt(pkt)
+      this.db_adverts.set @ id, advert
+      this.on_advert(id, advert)
 
-  query_key(query) :: return query.id_route
+  on_advert(pub_id, advert) ::
+    //console.log @ 'advert:', advert, peer
+
+  query_pub_id(query) :: return query.id_route
 
   // addDiscovery protocol {test, discover}
   test(query) :: return true
   async discover(query) ::
-    let key = await this.query_key(query)
+    let pub_id = await this.query_pub_id(query)
     let db_chans = this.db_chans
-    let cur = db_chans.get(key)
+    let cur = db_chans.get(pub_id)
     if ! cur ::
-      cur = this._use_advert(key, query)
-      db_chans.set(key, cur)
+      cur = this._use_advert(pub_id, query)
+      db_chans.set(pub_id, cur)
     return cur
+
+  on_connecting(id, advert) ::
+    //console.log @ 'advert:', advert, peer
 
   // retries = 3
   // ms_backoff = 50
-  async _use_advert(key, query) ::
+  async _use_advert(pub_id, query) ::
     let db_adverts = this.db_adverts,
         hub = query.router_ctx.hub,
         advert
     for let i=this.retries || 3; i>0; i-- ::
-      advert = await db_adverts.get(key)
+      advert = await db_adverts.get(pub_id)
       if advert :: break
       await hub.timeouts.add(this.ms_backoff || 50)
 
-    return advert && this._channel_to(hub, advert, query)
+    return advert &&
+      await this._channel_to(hub, pub_id, advert, query)
 
-  async _channel_to(hub, advert, query) ::
-    if ! advert.conn :: return
+  async _channel_to(hub, pub_id, advert, query) ::
+    if ! advert.conn ::
+      return
     let chan = await hub.connect(advert.conn)
     let peer = await chan.peer_info
-    this.on_connect(advert, peer, chan)
+
+    this.db_chans.set(pub_id, chan)
+    this.on_connect(pub_id, advert, peer, chan)
     return chan
 
-  on_connect(advert, peer, chan) ::
+  on_connect(pub_id, advert, peer, chan) ::
     //console.log @ 'connected to:', advert, peer
 

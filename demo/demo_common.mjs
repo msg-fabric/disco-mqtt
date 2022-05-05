@@ -29,11 +29,11 @@ export async function start_demo_hub(ms_jitter=1200) {
 export async function mf_mqtt_demo(mf_mqtt) {
   let {hub, id, conn} = await start_demo_hub()
 
+  hub.router.addDiscovery(
+    mf_mqtt.discovery())
+
   let my_ad = await mf_mqtt.advertize( id,
     { conn: `tcp://127.0.0.1:${conn.port}` })
-
-  hub.router.addDiscovery(
-    await mf_mqtt.discovery())
 
   await demo_chat(hub, mf_mqtt, my_ad)
 }

@@ -5,7 +5,6 @@ export class MQTT_advert extends MQTT_base ::
     return new this(pi_ctx)
       .with @: id, url_base, status
       .with_mqtt(mqtt)
-      .advertize()
 
   as_pub_id(id) :: return id
 
