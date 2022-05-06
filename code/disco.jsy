@@ -48,16 +48,16 @@ export class MQTT_disco extends MQTT_base ::
       db_chans.set(pub_id, cur)
     return cur
 
-  // retries = 3
-  // ms_backoff = 50
+  // ms_duration = 500
   async _use_advert(pub_id, query) ::
-    let db_adverts = this.db_adverts,
-        hub = query.router_ctx.hub,
-        advert
-    for let i=this.retries || 3; i>0; i-- ::
+    let hub = query.router_ctx.hub,
+        db_adverts = this.db_adverts,
+        advert = db_adverts.get(pub_id)
+
+    let ts_until = Date.now() + (this.ms_duration || 500)
+    while !advert && !query.done && ts_until > Date.now() ::
+      await hub.timeouts.f_tick()
       advert = await db_adverts.get(pub_id)
-      if advert :: break
-      await hub.timeouts.add(this.ms_backoff || 50)
 
     return advert &&
       await this._channel_to(hub, pub_id, advert, query)
