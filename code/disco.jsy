@@ -29,7 +29,10 @@ export class MQTT_disco extends MQTT_base ::
       this.on_advert(id, advert)
 
   on_advert(pub_id, advert) ::
-    //console.log @ 'advert:', advert, peer
+    //console.log @ 'advert:', pub_id, advert
+
+  on_discovering(pub_id, query) ::
+    //console.log @ 'discovering:', pub_id
 
   query_pub_id(query) :: return query.id_route
 
@@ -40,12 +43,10 @@ export class MQTT_disco extends MQTT_base ::
     let db_chans = this.db_chans
     let cur = db_chans.get(pub_id)
     if ! cur ::
+      this.on_discovering(pub_id, query)
       cur = this._use_advert(pub_id, query)
       db_chans.set(pub_id, cur)
     return cur
-
-  on_connecting(id, advert) ::
-    //console.log @ 'advert:', advert, peer
 
   // retries = 3
   // ms_backoff = 50
@@ -64,6 +65,7 @@ export class MQTT_disco extends MQTT_base ::
   async _channel_to(hub, pub_id, advert, query) ::
     if ! advert.conn ::
       return
+    this.on_connecting(pub_id, advert)
     let chan = await hub.connect(advert.conn)
     let peer = await chan.peer_info
 
@@ -71,6 +73,8 @@ export class MQTT_disco extends MQTT_base ::
     this.on_connect(pub_id, advert, peer, chan)
     return chan
 
+  on_connecting(pub_id, advert) ::
+    //console.log @ 'connecting:', pub_id, advert
   on_connect(pub_id, advert, peer, chan) ::
-    //console.log @ 'connected to:', advert, peer
+    //console.log @ 'connected to:', pub_id, advert
 
