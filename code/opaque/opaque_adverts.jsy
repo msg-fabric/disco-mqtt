@@ -6,6 +6,5 @@ export class MQTT_advert_opaque extends MQTT_advert ::
     let kref = await this.ctx.opaque.from_content(id)
     return u8_to_hex @ (this.kref = kref).k1ref
 
-  mqtt_obj_encode = obj =>
-    this.kref.encode_obj(obj)
+  _pkt_from_advert = obj => this.kref.encode_obj(obj)
 

@@ -1,36 +1,40 @@
 import {MQTT_base} from './base.jsy'
 
 export class MQTT_advert extends MQTT_base ::
-  static from(pi_ctx, mqtt, url_base, id, status) ::
+  static from(pi_ctx, mqtt, url, id, advert) ::
     return new this(pi_ctx)
-      .with @: id, url_base, status
+      .with @: id, url, advert
       .with_mqtt(mqtt)
 
   as_pub_id(id) :: return id
+  // _pkt_from_advert = obj => JSON.stringify(obj)
 
   async _mqtt_connect(mqtt) ::
     let pub_id = await this.as_pub_id(this.id)
-    let url = new URL(pub_id, this.url_base)
-    let topic = url.pathname
-    this.with @: pub_id, url, topic
+    this.with @: pub_id
 
+    let topic = new URL(pub_id, this.url).pathname
     return mqtt.connect @:
       client_id: `mf-${topic.split('/').pop()}-advert`
       // last will: remove key upon disconnect
       will: @{} qos: 1, retain: true, topic, paylod: ''
 
-  async advertize() ::
-    try ::
-      await this._conn
-    catch err :: return {err, advert: this}
 
-    let {mqtt, pub_id, topic, status} = this
-    try ::
-      if status ::
-        await mqtt.obj_store(topic, status, this.mqtt_obj_encode)
-      return {ok: !!status, pub_id, advert: this}
-    catch err ::
-      return {err, pub_id, advert: this}
+  async advertize(advert=this.advert) ::
+    await this._conn
 
-  // mqtt_obj_encode = obj => JSON.stringify(obj)
+    let pub_id = this.pub_id
+    let topic = new URL(pub_id, this.url).pathname
+    await this.mqtt.obj_store(topic, advert, this._pkt_from_advert)
+    return {pub_id, topic}
+
+  async send_advert(id, advert) ::
+    await this._conn
+    let pub_id = await this.as_pub_id(id)
+    let topic = new URL(pub_id, this.url).pathname
+    await this.mqtt.obj_send(topic, advert, this._pkt_from_advert)
+    return {pub_id, topic}
+
+  fwd_advert(id_src, fwd=this.id) ::
+    return this.send_advert(id_src, {fwd})
 
