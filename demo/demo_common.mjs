@@ -17,6 +17,12 @@ export async function start_demo_hub(ms_jitter=1200) {
     pkt => console.log(`Hello MSG RECV [${id}]:`, pkt.body))
   hub.send( [id, 'hello'], { test: 'smoke?'})
 
+  for (let hidden of process.argv.slice(2)) {
+    hub.localRoute(hidden, true)
+    .addTarget( 'hello',
+      pkt => console.log(`Other '${hidden}' MSG RECV [${id}]:`, pkt.body))
+  }
+
 
   const mf_svr = hub.tcp.createServer()
   mf_svr.listen({ port: 0, host: '0.0.0.0'})
@@ -35,11 +41,16 @@ export async function mf_mqtt_demo(mf_mqtt) {
   let my_ad = await mf_mqtt.advertize( id,
     { conn: `tcp://127.0.0.1:${conn.port}` })
 
-  await demo_chat(hub, mf_mqtt, my_ad)
+  for (let hidden of process.argv.slice(2)) {
+    console.log('advertize', {hidden})
+    my_ad.fwd_advert(hidden)
+  }
+
+  await demo_chat(hub, mf_mqtt, my_ad.pub_id)
 }
 
 
-export async function demo_chat(hub, mf_mqtt, {pub_id}) {
+export async function demo_chat(hub, mf_mqtt, pub_id) {
   let url_advert = mf_mqtt.url
   let url_chat = new URL('../chat/', url_advert)
 
@@ -56,12 +67,15 @@ export async function demo_chat(hub, mf_mqtt, {pub_id}) {
       } else console.log( "SAW myself!", params.id, samp)
     })
 
-  mqtt.on_topic( url_chat.pathname + ':id',
-    (pkt, params) => {
-      if (params.id != id_route)
+  if (2 >= process.argv.length)
+    mqtt.on_topic( url_chat.pathname + ':id',
+      (pkt, params) => {
+        if (params.id == id_route) return
+
+        console.log("Sending chat to:", params.id)
         hub.send( [params.id, 'hello'],
           { msg: `hello from ${me}` })
-    })
+      })
 
   await mqtt.connect()
   console.log('connected', {me})
@@ -72,8 +86,10 @@ export async function demo_chat(hub, mf_mqtt, {pub_id}) {
   await mqtt.subscribe(url_chat.pathname + '#')
   //console.log('chat subscribed', url_chat.pathname + '#')
 
-  let cid = new URL(id_route, url_chat).pathname
+  let options = [id_route, ... process.argv.slice(2)]
   while (1) {
+    let id_sel = options[(options.length * Math.random())|0]
+    let cid = new URL(id_sel, url_chat).pathname
     await mqtt.json_post(cid, {chat: me, ts: new Date})
     await jitter_sleep(500, 5000)
   }
