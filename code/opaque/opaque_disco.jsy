@@ -4,25 +4,24 @@ import {MQTT_disco} from '../disco.jsy'
 export class MQTT_disco_opaque extends MQTT_disco ::
   constructor(pi_ctx) ::
     super(pi_ctx)
-    this.sym = Symbol()
+    this._sym = Symbol()
 
-  advert_from_pkt(pkt) ::
+  _advert_from_pkt(pkt) ::
     return pkt.payload.slice()
 
-  async query_pub_id(query) ::
+  async _query_pub_id(query) ::
     let {id_route} = query
     let kref = await this.ctx.opaque.from_content(id_route)
-    query[this.sym] = kref
+    query[this._sym] = kref
     return u8_to_hex @ kref.k1ref
 
-  async _channel_to(hub, pub_id, raw_advert, query) ::
-    let advert
-    try ::
-      let kref = query[this.sym]
-      advert = await kref.decode_obj(raw_advert)
-    catch err ::
-      console.warn @ "MQTT_disco_opaque err", err
-      return
-
-    return super._channel_to(hub, pub_id, advert, query)
+  async _retry_db(pub_id, db, query) ::
+    let raw_advert = await super._retry_db(pub_id, db, query)
+    if raw_advert ::
+      try ::
+        let kref = query[this._sym]
+        return await kref.decode_obj(raw_advert)
+      catch err ::
+        console.warn @ "MQTT_disco_opaque err", err
+        return
 

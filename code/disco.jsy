@@ -7,15 +7,16 @@ export class MQTT_disco extends MQTT_base ::
       .subscribe(url)
 
   subscribe(url) ::
-    this.mqtt.on_topic @ url.pathname+':id',
+    this.mqtt.sub_topic @
+      url.pathname+':id'
       this._on_advert_pkt.bind(this)
-    this.mqtt.subscribe(url.pathname + '#')
     return this.with @:
       url: new URL('.', url)
       db_adverts: new Map()
       db_chans: new Map()
 
-  advert_from_pkt(pkt) ::
+
+  _advert_from_pkt(pkt) ::
     return pkt.json()
 
   _on_advert_pkt(pkt, {id}) ::
@@ -24,22 +25,26 @@ export class MQTT_disco extends MQTT_base ::
       this.db_chans.delete(id)
       this.on_advert(id)
     else ::
-      let advert = this.advert_from_pkt(pkt)
+      let advert = this._advert_from_pkt(pkt)
       this.db_adverts.set @ id, advert
       this.on_advert(id, advert)
 
-  on_advert(pub_id, advert) ::
-    //console.log @ 'advert:', pub_id, advert
+  // ms_duration = 500
+  async _retry_db(pub_id, db, query) ::
+    if ! db :: return
+    let res, ts_until = Date.now() + (this.ms_duration || 500)
+    while !res && !query.done && ts_until > Date.now() ::
+      await query.router_ctx.timeouts.f_tick()
+      res = await db.get(pub_id)
+    return res
 
-  on_discovering(pub_id, query) ::
-    //console.log @ 'discovering:', pub_id
 
-  query_pub_id(query) :: return query.id_route
+  _query_pub_id(query) :: return query.id_route
 
   // addDiscovery protocol {test, discover}
   test(query) :: return true
   async discover(query) ::
-    let pub_id = await this.query_pub_id(query)
+    let pub_id = await this._query_pub_id(query)
     let db_chans = this.db_chans
     let cur = db_chans.get(pub_id)
     if ! cur ::
@@ -48,33 +53,67 @@ export class MQTT_disco extends MQTT_base ::
       db_chans.set(pub_id, cur)
     return cur
 
-  // ms_duration = 500
   async _use_advert(pub_id, query) ::
-    let hub = query.router_ctx.hub,
-        db_adverts = this.db_adverts,
-        advert = db_adverts.get(pub_id)
+    let advert = await this._retry_db @
+      pub_id, this.db_adverts, query
 
-    let ts_until = Date.now() + (this.ms_duration || 500)
-    while !advert && !query.done && ts_until > Date.now() ::
-      await hub.timeouts.f_tick()
-      advert = await db_adverts.get(pub_id)
+    this.on_discovered(pub_id, advert, query)
+    if ! advert :: return
 
-    return advert &&
-      await this._channel_to(hub, pub_id, advert, query)
+    if advert.conn ::
+      return query.answer @
+        this._channel_to @
+          query.router_ctx.hub,
+          pub_id, advert, query
+
+    if advert.fwd ::
+      return query.answer @
+        this._forward_to @
+          pub_id, advert, query
+
 
   async _channel_to(hub, pub_id, advert, query) ::
-    if ! advert.conn ::
-      return
-    this.on_connecting(pub_id, advert)
-    let chan = await hub.connect(advert.conn)
-    let peer = await chan.peer_info
+    let conn = advert.conn
+    if ! conn :: return
 
-    this.db_chans.set(pub_id, chan)
-    this.on_connect(pub_id, advert, peer, chan)
+    this.on_connecting(pub_id, advert)
+    let router = query.router_ctx.hub_router
+    let chan = await hub.connect(conn)
+      .catch @ err => this.on_connect_error(pub_id, advert, err)
+
+    if chan ::
+      router.addPeer(query.id_route, chan)
+      query.answer(chan)
+
+    this.on_connect(pub_id, advert, chan)
     return chan
 
+
+  async _forward_to(pub_id, advert, query) ::
+    let fwd = advert.fwd
+    if ! fwd :: return
+
+    let router = query.router_ctx.hub_router
+    let fn_route = await router.resolveRoute(fwd, true, true)
+    if fn_route ::
+      router.addRoute(query.id_route, fn_route)
+
+    this.on_forward(pub_id, advert, fn_route)
+    return fn_route
+
+
+  on_advert(pub_id, advert) ::
+    //console.log @ 'advert:', pub_id, advert
+  on_discovering(pub_id, query) ::
+    //console.log @ 'discovering:', pub_id
+  on_discovered(pub_id, advert, query) ::
+    //console.log @ 'discovered:', pub_id, advert
+  on_forward(pub_id, advert, route) ::
+    //console.log @ 'forward:', pub_id, advert, route
   on_connecting(pub_id, advert) ::
     //console.log @ 'connecting:', pub_id, advert
-  on_connect(pub_id, advert, peer, chan) ::
+  on_connect(pub_id, advert, chan) ::
     //console.log @ 'connected to:', pub_id, advert
+  on_connect_error(pub_id, advert, err) ::
+    console.warn @ err
 
