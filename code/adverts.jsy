@@ -35,6 +35,6 @@ export class MQTT_advert extends MQTT_base ::
     await this.mqtt.obj_send(topic, advert, this._pkt_from_advert)
     return {pub_id, topic}
 
-  fwd_advert(id_src, fwd=this.id) ::
+  fwd_advert(id_src, fwd=this.id_fwd || this.id) ::
     return this.send_advert(id_src, {fwd})
 
