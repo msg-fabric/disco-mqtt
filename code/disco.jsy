@@ -13,7 +13,6 @@ export class MQTT_disco extends MQTT_base ::
     return this.with @:
       url: new URL('.', url)
       db_adverts: new Map()
-      db_chans: new Map()
 
 
   _advert_from_pkt(pkt) ::
@@ -22,7 +21,6 @@ export class MQTT_disco extends MQTT_base ::
   _on_advert_pkt(pkt, {id}) ::
     if 0 === pkt.payload.length ::
       this.db_adverts.delete(id)
-      this.db_chans.delete(id)
       this.on_advert(id)
     else ::
       let advert = this._advert_from_pkt(pkt)
@@ -34,7 +32,7 @@ export class MQTT_disco extends MQTT_base ::
     if ! db :: return
     let res, ts_until = Date.now() + (this.ms_duration || 500)
     while !res && !query.done && ts_until > Date.now() ::
-      await query.router_ctx.timeouts.f_tick()
+      await query.timeouts.f_tick()
       res = await db.get(pub_id)
     return res
 
@@ -45,15 +43,7 @@ export class MQTT_disco extends MQTT_base ::
   test(query) :: return true
   async discover(query) ::
     let pub_id = await this._query_pub_id(query)
-    let db_chans = this.db_chans
-    let cur = db_chans.get(pub_id)
-    if ! cur ::
-      this.on_discovering(pub_id, query)
-      cur = this._use_advert(pub_id, query)
-      db_chans.set(pub_id, cur)
-    return cur
-
-  async _use_advert(pub_id, query) ::
+    this.on_discovering(pub_id, query)
     let advert = await this._retry_db @
       pub_id, this.db_adverts, query
 
@@ -62,13 +52,12 @@ export class MQTT_disco extends MQTT_base ::
 
     if advert.conn ::
       return query.answer @
-        this._channel_to @
-          query.router_ctx.hub,
-          pub_id, advert, query
+        await this._channel_to @
+          query.hub, pub_id, advert, query
 
     if advert.fwd ::
       return query.answer @
-        this._forward_to @
+        await this._forward_to @
           pub_id, advert, query
 
 
@@ -77,12 +66,11 @@ export class MQTT_disco extends MQTT_base ::
     if ! conn :: return
 
     this.on_connecting(pub_id, advert)
-    let router = query.router_ctx.hub_router
     let chan = await hub.connect(conn)
       .catch @ err => this.on_connect_error(pub_id, advert, err)
 
     if chan ::
-      router.addPeer(query.id_route, chan)
+      query.hub_router.addPeer(query.id_route, chan)
       query.answer(chan)
 
     this.on_connect(pub_id, advert, chan)
@@ -93,10 +81,9 @@ export class MQTT_disco extends MQTT_base ::
     let fwd = advert.fwd
     if ! fwd :: return
 
-    let router = query.router_ctx.hub_router
-    let fn_route = await router.resolveRoute(fwd, true, true)
+    let fn_route = await query.resolveRoute(fwd, true, true)
     if fn_route ::
-      router.addRoute(query.id_route, fn_route)
+      query.hub_router.addRoute(query.id_route, fn_route)
 
     this.on_forward(pub_id, advert, fn_route)
     return fn_route
