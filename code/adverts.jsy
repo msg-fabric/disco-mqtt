@@ -42,5 +42,5 @@ export class MQTT_advert extends MQTT_base ::
     return {pub_id, topic}
 
   fwd_advert(id_src, fwd=this.id_fwd || this.id, expiry) ::
-    return this.send_advert(id_src, {fwd}, expiry)
+    return this.send_advert(id_src, fwd ? {fwd} : '', expiry)
 
