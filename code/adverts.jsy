@@ -9,6 +9,12 @@ export class MQTT_advert extends MQTT_base ::
   as_pub_id(id) :: return id
   // _pkt_from_advert = obj => JSON.stringify(obj)
 
+  as_pub_opt(expiry=this.expiry ?? 30) ::
+    return @{}
+      fn_encode: this._pkt_from_advert
+      props: !expiry ? null : @{}
+        message_expiry_interval: Math.ceil(expiry)
+
   async _mqtt_connect(mqtt) ::
     let pub_id = await this.as_pub_id(this.id)
     this.with @: pub_id
@@ -25,16 +31,16 @@ export class MQTT_advert extends MQTT_base ::
 
     let pub_id = this.pub_id
     let topic = new URL(pub_id, this.url).pathname
-    await this.mqtt.obj_store(topic, advert, this._pkt_from_advert)
+    await this.mqtt.obj_store @ topic, advert, this.as_pub_opt(false)
     return {pub_id, topic}
 
-  async send_advert(id, advert) ::
+  async send_advert(id, advert, expiry) ::
     await this._conn
     let pub_id = await this.as_pub_id(id)
     let topic = new URL(pub_id, this.url).pathname
-    await this.mqtt.obj_send(topic, advert, this._pkt_from_advert)
+    await this.mqtt.obj_store @ topic, advert, this.as_pub_opt(expiry)
     return {pub_id, topic}
 
-  fwd_advert(id_src, fwd=this.id_fwd || this.id) ::
-    return this.send_advert(id_src, {fwd})
+  fwd_advert(id_src, fwd=this.id_fwd || this.id, expiry) ::
+    return this.send_advert(id_src, {fwd}, expiry)
 
